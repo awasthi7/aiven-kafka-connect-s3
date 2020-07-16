@@ -27,6 +27,10 @@ import io.aiven.kafka.connect.common.config.TimestampSource;
 import io.aiven.kafka.connect.common.templating.VariableTemplatePart.Parameter;
 
 public class FormatterUtils {
+    public static String formatKafkaOffset(final long kafkaOffset, final VariableTemplatePart.Parameter parameter) {
+        return parameter.asBoolean() ? String.format("%020d", kafkaOffset) : Long.toString(kafkaOffset);
+    }
+
     public static final BiFunction<SinkRecord, Parameter, String> FORMAT_KAFKA_OFFSET =
         (sinkRecord, usePaddingParameter) ->
             usePaddingParameter.asBoolean()

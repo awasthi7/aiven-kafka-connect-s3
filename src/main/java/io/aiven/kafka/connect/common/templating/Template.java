@@ -17,6 +17,7 @@
 
 package io.aiven.kafka.connect.common.templating;
 
+import io.aiven.kafka.connect.common.config.TimestampSource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,11 +27,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.apache.kafka.connect.sink.SinkRecord;
 
 public final class Template {
-
-    private static final Pattern VARIABLE_PATTERN =
-        Pattern.compile("\\{\\{\\s*(([\\w_]+)(:([\\w]+)=([\\w]+))?)\\s*}}");
 
     private final List<Pair<String, VariableTemplatePart.Parameter>> variablesAndParameters;
 
@@ -125,6 +124,15 @@ public final class Template {
                         sb.append(variableTemplatePart.originalPlaceholder());
                     }
                 }
+            }
+            return sb.toString();
+        }
+
+        public final String render(TimestampSource timestampSource, SinkRecord sinkRecord) {
+            final StringBuilder sb = new StringBuilder();
+            for (final TemplatePart templatePart : templateParts) {
+                final VariableTemplatePart variableTemplatePart = (VariableTemplatePart) templatePart;
+                sb.append(variableTemplatePart.format(timestampSource, sinkRecord.topic(), sinkRecord.kafkaPartition(), sinkRecord.kafkaOffset()));
             }
             return sb.toString();
         }

@@ -17,6 +17,7 @@
 
 package io.aiven.kafka.connect.s3;
 
+import io.aiven.kafka.connect.common.templating.FormatterUtils;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
@@ -47,9 +48,6 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static io.aiven.kafka.connect.common.templating.FormatterUtils.FORMAT_KAFKA_OFFSET;
-import static io.aiven.kafka.connect.common.templating.FormatterUtils.FORMAT_TIMESTAMP;
 
 public class S3StreamWriter {
 
@@ -114,37 +112,10 @@ public class S3StreamWriter {
     }
 
     private OutputStream newStreamFor(final SinkRecord record) {
-        final var prefix =
-            prefixTemplate
-                .instance()
-                .bindVariable(
-                    Variables.TIMESTAMP.name,
-                    parameter -> FORMAT_TIMESTAMP.apply(config.getTimestampSource(), parameter)
-                )
-                .bindVariable(
-                    Variables.PARTITION.name,
-                    () -> record.kafkaPartition().toString()
-                )
-                .bindVariable(
-                    Variables.START_OFFSET.name,
-                    parameter -> FORMAT_KAFKA_OFFSET.apply(record, parameter)
-                )
-                .bindVariable(FilenameTemplateVariable.TOPIC.name, record::topic)
-                .bindVariable(
-                    "utc_date",
-                    () -> ZonedDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_LOCAL_DATE)
-                )
-                .bindVariable(
-                    "local_date",
-                    () -> LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
-                )
-                .render();
-        final var key =
-            String.format(
-                "%s-%s-%s",
-                record.topic(),
-                record.kafkaPartition(),
-                FORMAT_KAFKA_OFFSET.apply(record, VariableTemplatePart.Parameter.of("padding", "true")));
+        final var prefix = prefixTemplate.instance().render(config.getTimestampSource(), record);
+        final var kafkaOffset = FormatterUtils.formatKafkaOffset(record.kafkaOffset(),
+            VariableTemplatePart.Parameter.of("padding", "true"));
+        final var key = String.format("%s-%s-%s", record.topic(), record.kafkaPartition(), kafkaOffset);
         final var fullKey = config.getCompressionType() == CompressionType.GZIP ? prefix + key + ".gz" : prefix + key;
         final var awsOutputStream = new S3OutputStream(s3Client, config.getAwsS3BucketName(), fullKey);
         try {

@@ -17,15 +17,33 @@
 
 package io.aiven.kafka.connect.common.templating;
 
+import io.aiven.kafka.connect.common.config.TimestampSource;
+import io.aiven.kafka.connect.common.config.Variables;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import java.util.Objects;
 
 public class VariableTemplatePart implements TemplatePart {
+    private static final Map<String, DateTimeFormatter> FOMATTER_MAP =
+        Map.of(
+            "YYYY", DateTimeFormatter.ofPattern("YYYY"),
+            "MM", DateTimeFormatter.ofPattern("MM"),
+            "dd", DateTimeFormatter.ofPattern("dd"),
+            "HH", DateTimeFormatter.ofPattern("HH")
+        );
 
     private final String variableName;
 
     private final Parameter parameter;
 
     private final String originalPlaceholder;
+
+    protected VariableTemplatePart(final String originalPlaceholder) {
+        this(null, Parameter.EMPTY, originalPlaceholder);
+    }
 
     protected VariableTemplatePart(
         final String variableName,
@@ -54,10 +72,31 @@ public class VariableTemplatePart implements TemplatePart {
         return originalPlaceholder;
     }
 
+    public String format(TimestampSource timestampSource, String kafkaTopic, Integer kafkaPartition, long kafkaOffset) {
+        if (Variables.TOPIC.name.equals(variableName)) {
+            return kafkaTopic;
+        }
+        if (Variables.PARTITION.name.equals(variableName)) {
+            return kafkaPartition.toString();
+        }
+        if (Variables.START_OFFSET.name.equals(variableName)) {
+            return parameter.asBoolean() ? String.format("%020d", kafkaOffset) : Long.toString(kafkaOffset);
+        }
+        if (Variables.TIMESTAMP.name.equals(variableName)) {
+            return timestampSource.time().format(FOMATTER_MAP.get(parameter.value()));
+        }
+        if (Variables.UTC_DATE.name.equals(variableName)) {
+            return ZonedDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_LOCAL_DATE);
+        }
+        if (Variables.LOCAL_DATE.name.equals(variableName)) {
+            return LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
+        }
+        return originalPlaceholder;
+    }
+
     public static final class Parameter {
 
-        public static final Parameter EMPTY =
-            new Parameter("__EMPTY__", "__NO_VALUE__");
+        public static final Parameter EMPTY = new Parameter("__EMPTY__", "__NO_VALUE__");
 
         private final String name;
 

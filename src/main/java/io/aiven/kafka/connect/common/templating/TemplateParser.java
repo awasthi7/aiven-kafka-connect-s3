@@ -36,10 +36,6 @@ public final class TemplateParser {
     private static final Pattern PARAMETER_PATTERN =
         Pattern.compile("([\\w]+)?=?([\\w]+)?"); // foo=bar
 
-    private TemplateParser() {
-
-    }
-
     public static Pair<List<Pair<String, VariableTemplatePart.Parameter>>, List<TemplatePart>> parse(
         final String template) {
         LOGGER.debug("Parse template: {}", template);
@@ -52,9 +48,7 @@ public final class TemplateParser {
 
         int position = 0;
         while (m.find()) {
-            templatePartsBuilder.add(
-                new TextTemplatePart(template.substring(position, m.start()))
-            );
+            templatePartsBuilder.add(new VariableTemplatePart(template.substring(position, m.start())));
             final String variable = m.group(1);
             final String parameterDef = m.group(2);
             final String parameter = m.group(3);
@@ -77,7 +71,7 @@ public final class TemplateParser {
             templatePartsBuilder.add(new VariableTemplatePart(variable, p, m.group()));
             position = m.end();
         }
-        templatePartsBuilder.add(new TextTemplatePart(template.substring(position)));
+        templatePartsBuilder.add(new VariableTemplatePart(template.substring(position)));
 
         return Pair.of(variablesAndParametersBuilder.build(), templatePartsBuilder.build());
     }
