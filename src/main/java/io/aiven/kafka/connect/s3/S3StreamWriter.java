@@ -17,13 +17,8 @@
 
 package io.aiven.kafka.connect.s3;
 
-import io.aiven.kafka.connect.common.templating.FormatterUtils;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -34,10 +29,9 @@ import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.sink.SinkRecord;
 
 import io.aiven.kafka.connect.common.config.CompressionType;
-import io.aiven.kafka.connect.common.config.FilenameTemplateVariable;
 import io.aiven.kafka.connect.common.config.S3SinkConfig;
-import io.aiven.kafka.connect.common.config.Variables;
 import io.aiven.kafka.connect.common.output.OutputWriter;
+import io.aiven.kafka.connect.common.templating.FormatterUtils;
 import io.aiven.kafka.connect.common.templating.Template;
 import io.aiven.kafka.connect.common.templating.VariableTemplatePart;
 

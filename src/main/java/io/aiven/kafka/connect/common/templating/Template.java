@@ -17,7 +17,6 @@
 
 package io.aiven.kafka.connect.common.templating;
 
-import io.aiven.kafka.connect.common.config.TimestampSource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,9 +24,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import org.apache.kafka.connect.sink.SinkRecord;
+
+import io.aiven.kafka.connect.common.config.TimestampSource;
 
 public final class Template {
 
@@ -128,11 +129,12 @@ public final class Template {
             return sb.toString();
         }
 
-        public final String render(TimestampSource timestampSource, SinkRecord sinkRecord) {
+        public final String render(final TimestampSource timestampSource, final SinkRecord sinkRecord) {
             final StringBuilder sb = new StringBuilder();
             for (final TemplatePart templatePart : templateParts) {
                 final VariableTemplatePart variableTemplatePart = (VariableTemplatePart) templatePart;
-                sb.append(variableTemplatePart.format(timestampSource, sinkRecord.topic(), sinkRecord.kafkaPartition(), sinkRecord.kafkaOffset()));
+                sb.append(variableTemplatePart.format(timestampSource, sinkRecord.topic(),
+                    sinkRecord.kafkaPartition(), sinkRecord.kafkaOffset()));
             }
             return sb.toString();
         }

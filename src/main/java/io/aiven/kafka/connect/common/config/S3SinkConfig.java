@@ -581,22 +581,7 @@ public class S3SinkConfig extends AbstractConfig {
     }
 
     public Template getPrefixTemplate() {
-        final var t = Template.of(getAwsS3Prefix());
-        t.instance()
-            .bindVariable(
-                "utc_date",
-                () -> {
-                    LOGGER.info("utc_date variable is deprecated please read documentation for the new name");
-                    return "";
-                })
-            .bindVariable(
-                "local_date",
-                () -> {
-                    LOGGER.info("local_date variable is deprecated please read documentation for the new name");
-                    return "";
-                })
-            .render();
-        return t;
+        return Template.of(getAwsS3Prefix());
     }
 
     public final ZoneId getTimezone() {

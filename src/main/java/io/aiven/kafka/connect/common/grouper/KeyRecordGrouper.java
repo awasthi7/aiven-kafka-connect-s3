@@ -35,7 +35,7 @@ public final class KeyRecordGrouper implements RecordGrouper {
 
     private final Template filenameTemplate;
 
-    // One record pre file, but use List here for the compatibility with the interface.
+    // One record per file, but use List here for the compatibility with the interface.
     private final Map<String, List<SinkRecord>> fileBuffers = new HashMap<>();
 
     /**
