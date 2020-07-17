@@ -34,7 +34,6 @@ import static io.aiven.kafka.connect.common.config.S3SinkConfig.OUTPUT_COMPRESSI
 import static io.aiven.kafka.connect.common.config.S3SinkConfig.OUTPUT_FIELDS;
 import static io.aiven.kafka.connect.common.config.S3SinkConfig.TIMESTAMP_SOURCE;
 import static io.aiven.kafka.connect.common.config.S3SinkConfig.TIMESTAMP_TIMEZONE;
-import static io.aiven.kafka.connect.common.templating.FormatterUtils.FORMAT_TIMESTAMP;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -654,12 +653,7 @@ class S3SinkConfigTest {
 
         final var expectedTimestamp = config.getTimestampSource().time();
 
-        final var renderedPrefix =
-            config.getPrefixTemplate()
-                .instance()
-                .bindVariable("timestamp", parameter ->
-                    FORMAT_TIMESTAMP.apply(config.getTimestampSource(), parameter))
-                .render();
+        final var renderedPrefix = config.getPrefixTemplate().instance().render(config.getTimestampSource(), null);
 
         assertEquals(
             String.format(

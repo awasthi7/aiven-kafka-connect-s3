@@ -31,9 +31,7 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import io.aiven.kafka.connect.common.config.CompressionType;
 import io.aiven.kafka.connect.common.config.S3SinkConfig;
 import io.aiven.kafka.connect.common.output.OutputWriter;
-import io.aiven.kafka.connect.common.templating.FormatterUtils;
 import io.aiven.kafka.connect.common.templating.Template;
-import io.aiven.kafka.connect.common.templating.VariableTemplatePart;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -107,8 +105,7 @@ public class S3StreamWriter {
 
     private OutputStream newStreamFor(final SinkRecord record) {
         final var prefix = prefixTemplate.instance().render(config.getTimestampSource(), record);
-        final var kafkaOffset = FormatterUtils.formatKafkaOffset(record.kafkaOffset(),
-            VariableTemplatePart.Parameter.of("padding", "true"));
+        final var kafkaOffset = String.format("%020d", record.kafkaOffset());
         final var key = String.format("%s-%s-%s", record.topic(), record.kafkaPartition(), kafkaOffset);
         final var fullKey = config.getCompressionType() == CompressionType.GZIP ? prefix + key + ".gz" : prefix + key;
         final var awsOutputStream = new S3OutputStream(s3Client, config.getAwsS3BucketName(), fullKey);

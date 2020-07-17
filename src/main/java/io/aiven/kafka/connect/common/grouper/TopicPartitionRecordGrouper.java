@@ -48,13 +48,13 @@ final class TopicPartitionRecordGrouper implements RecordGrouper {
 
     private final Template filenameTemplate;
 
+    private final TimestampSource timestampSource;
+
     private final Integer maxRecordsPerFile;
 
     private final Map<TopicPartition, SinkRecord> currentHeadRecords = new HashMap<>();
 
     private final Map<String, List<SinkRecord>> fileBuffers = new HashMap<>();
-
-    private final Function<Parameter, String> setTimestamp;
 
     /**
      * A constructor.
@@ -69,23 +69,7 @@ final class TopicPartitionRecordGrouper implements RecordGrouper {
         Objects.requireNonNull(timestampSource, "timestampSource cannot be null");
         this.filenameTemplate = filenameTemplate;
         this.maxRecordsPerFile = maxRecordsPerFile;
-        this.setTimestamp = new Function<Parameter, String>() {
-
-            //FIXME move into commons lib
-            private final Map<String, DateTimeFormatter> timestampFormatters =
-                ImmutableMap.of(
-                    "YYYY", DateTimeFormatter.ofPattern("YYYY"),
-                    "MM", DateTimeFormatter.ofPattern("MM"),
-                    "dd", DateTimeFormatter.ofPattern("dd"),
-                    "HH", DateTimeFormatter.ofPattern("HH")
-                );
-
-            @Override
-            public String apply(final Parameter parameter) {
-                return timestampSource.time().format(timestampFormatters.get(parameter.value()));
-            }
-
-        };
+        this.timestampSource = timestampSource;
     }
 
     @Override
@@ -107,27 +91,10 @@ final class TopicPartitionRecordGrouper implements RecordGrouper {
     }
 
     private String generateRecordKey(final TopicPartition tp, final SinkRecord headRecord) {
-        //FIXME move into commons lib
-        final Function<Parameter, String> setKafkaOffset =
-            usePaddingParameter -> usePaddingParameter.asBoolean()
-                ? String.format("%020d", headRecord.kafkaOffset())
-                : Long.toString(headRecord.kafkaOffset());
-
-        return filenameTemplate.instance()
-            .bindVariable(FilenameTemplateVariable.TOPIC.name, tp::topic)
-            .bindVariable(
-                FilenameTemplateVariable.PARTITION.name,
-                () -> Integer.toString(tp.partition())
-            )
-            .bindVariable(
-                FilenameTemplateVariable.START_OFFSET.name,
-                setKafkaOffset
-            )
-            .bindVariable(
-                FilenameTemplateVariable.TIMESTAMP.name,
-                setTimestamp
-            )
-            .render();
+        return filenameTemplate.instance().render(timestampSource,
+            tp.topic(),
+            tp.partition(),
+            headRecord.kafkaOffset());
     }
 
     private boolean shouldCreateNewFile(final String recordKey) {

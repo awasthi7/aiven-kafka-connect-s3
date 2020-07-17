@@ -17,6 +17,7 @@
 
 package io.aiven.kafka.connect.common.templating;
 
+import io.aiven.kafka.connect.common.config.FilenameTemplateVariable;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -26,6 +27,8 @@ import java.util.Objects;
 
 import io.aiven.kafka.connect.common.config.TimestampSource;
 import io.aiven.kafka.connect.common.config.Variables;
+import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.sink.SinkRecord;
 
 public class VariableTemplatePart implements TemplatePart {
     private static final Map<String, DateTimeFormatter> FORMATTER_MAP =
@@ -70,6 +73,32 @@ public class VariableTemplatePart implements TemplatePart {
     }
 
     public final String originalPlaceholder() {
+        return originalPlaceholder;
+    }
+
+    public String format(final SinkRecord sinkRecord) {
+        if (FilenameTemplateVariable.KEY.name.equals(variableName)) {
+            if (sinkRecord.key() == null) {
+                return "null";
+            } else if (sinkRecord.keySchema().type() == Schema.Type.STRING) {
+                return (String) sinkRecord.key();
+            } else {
+                return sinkRecord.key().toString();
+            }
+        }
+        return originalPlaceholder;
+    }
+
+    public String format(final TimestampSource timestampSource) {
+        if (Variables.TIMESTAMP.name.equals(variableName)) {
+            return timestampSource.time().format(FORMATTER_MAP.get(parameter.value()));
+        }
+        if (Variables.UTC_DATE.name.equals(variableName)) {
+            return ZonedDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_LOCAL_DATE);
+        }
+        if (Variables.LOCAL_DATE.name.equals(variableName)) {
+            return LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
+        }
         return originalPlaceholder;
     }
 

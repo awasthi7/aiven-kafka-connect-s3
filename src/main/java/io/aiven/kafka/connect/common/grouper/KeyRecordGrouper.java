@@ -63,19 +63,7 @@ public final class KeyRecordGrouper implements RecordGrouper {
     }
 
     private String generateRecordKey(final SinkRecord record) {
-        final Supplier<String> setKey = () -> {
-            if (record.key() == null) {
-                return "null";
-            } else if (record.keySchema().type() == Schema.Type.STRING) {
-                return (String) record.key();
-            } else {
-                return record.key().toString();
-            }
-        };
-
-        return filenameTemplate.instance()
-            .bindVariable(FilenameTemplateVariable.KEY.name, setKey)
-            .render();
+        return filenameTemplate.instance().render(record);
     }
 
     @Override

@@ -129,12 +129,37 @@ public final class Template {
             return sb.toString();
         }
 
+        public final String render(final TimestampSource timestampSource,
+                                   final String kafkaTopic,
+                                   final int kafkaPartition,
+                                   final long kafkaOffset) {
+            final StringBuilder sb = new StringBuilder();
+            for (final TemplatePart templatePart : templateParts) {
+                final VariableTemplatePart variableTemplatePart = (VariableTemplatePart) templatePart;
+                sb.append(variableTemplatePart.format(timestampSource, kafkaTopic, kafkaPartition, kafkaOffset));
+            }
+            return sb.toString();
+        }
+
         public final String render(final TimestampSource timestampSource, final SinkRecord sinkRecord) {
             final StringBuilder sb = new StringBuilder();
             for (final TemplatePart templatePart : templateParts) {
                 final VariableTemplatePart variableTemplatePart = (VariableTemplatePart) templatePart;
-                sb.append(variableTemplatePart.format(timestampSource, sinkRecord.topic(),
-                    sinkRecord.kafkaPartition(), sinkRecord.kafkaOffset()));
+                if (timestampSource != null && sinkRecord != null) {
+                    sb.append(variableTemplatePart.format(timestampSource, sinkRecord.topic(),
+                        sinkRecord.kafkaPartition(), sinkRecord.kafkaOffset()));
+                } else {
+                    sb.append(variableTemplatePart.format(timestampSource));
+                }
+            }
+            return sb.toString();
+        }
+
+        public final String render(final SinkRecord sinkRecord) {
+            final StringBuilder sb = new StringBuilder();
+            for (final TemplatePart templatePart : templateParts) {
+                final VariableTemplatePart variableTemplatePart = (VariableTemplatePart) templatePart;
+                sb.append(variableTemplatePart.format(sinkRecord));
             }
             return sb.toString();
         }
