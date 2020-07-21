@@ -17,7 +17,6 @@
 
 package io.aiven.kafka.connect.common.templating;
 
-import io.aiven.kafka.connect.common.config.FilenameTemplateVariable;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -25,10 +24,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Objects;
 
-import io.aiven.kafka.connect.common.config.TimestampSource;
-import io.aiven.kafka.connect.common.config.Variables;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.sink.SinkRecord;
+
+import io.aiven.kafka.connect.common.config.FilenameTemplateVariable;
+import io.aiven.kafka.connect.common.config.TimestampSource;
+import io.aiven.kafka.connect.common.config.Variables;
 
 public class VariableTemplatePart implements TemplatePart {
     private static final Map<String, DateTimeFormatter> FORMATTER_MAP =
@@ -104,13 +105,13 @@ public class VariableTemplatePart implements TemplatePart {
 
     public String format(final TimestampSource timestampSource,
                          final String kafkaTopic,
-                         final Integer kafkaPartition,
+                         final int kafkaPartition,
                          final long kafkaOffset) {
         if (Variables.TOPIC.name.equals(variableName)) {
             return kafkaTopic;
         }
         if (Variables.PARTITION.name.equals(variableName)) {
-            return kafkaPartition.toString();
+            return Integer.toString(kafkaPartition);
         }
         if (Variables.START_OFFSET.name.equals(variableName)) {
             return parameter.asBoolean() ? String.format("%020d", kafkaOffset) : Long.toString(kafkaOffset);
